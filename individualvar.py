@@ -102,8 +102,9 @@ def sim(nn, tt, count):
         sample.append(sumlst)
         fig, (ax1, ax2) = plt.subplots(1, 2)
         fig.suptitle('Number of Active Symptoms and Distribution Over Time')
-        ax1.plot(np.linspace(0, len(sample[0]), len(sample[0])), sample[0])
-        ax2 = plt.hist(sample, orientation= 'horizontal')
+        ax1.plot(np.linspace(0, len(sample[0]), len(sample[0])), sample[0], color= "k")
+        ax2.hist(sample, orientation= 'horizontal', color= "k")
+        plt.setp((ax1, ax2), ylim=(0,9))
         plt.show()
 
     return count + 1 #increment counter
