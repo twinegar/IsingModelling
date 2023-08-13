@@ -2,13 +2,16 @@
 # Modified by Tomas 17/5/2023 to fit to depression modelling data
 # Key modifications: 
 # Weighted interactions between all nodes in the system
+# Probabalistic sparse connectivity of symptoms
 # External field interactions
 # Different classification function
 # Simulating timeseries data 
+# Within individual symptom networks
 
 %matplotlib inline
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy as sp
 import pandas as pd
 
 #%% 
@@ -16,11 +19,9 @@ import pandas as pd
 k        = 9    #number of nodes
 t        = 3000 #number of time points
 n        = 10   #number of subjects
-beta     = 0.5 
+beta     = 0.5  #inverse temperature term
 density  = 0.5  #1 - sparcity 
-threshold = 5   #how many symptoms have to be present to be classified as depressed
-colnames = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'condition']  #set column names for output data
-counter = 0                                                                     #initialize counter
+threshold = 5   #how many symptoms have to be present to be classified as depressed                                                                   #initialize counter
 #%% 
 # Functions 
 def initialstate(k):  
@@ -81,9 +82,9 @@ def adderr(data, amount):
 
 #%% 
 # Simulation
-def sim(nn, tt, count): 
+def sim(nn, tt): 
     #Takes in n subjects, t timepoints, and a counter for naming output files
-    samplet = t-1 #np.random.randint(10, tt, 1) #choose random timepoint for when to sample
+    data = []
     for subjects in range(nn): 
         sample = []                                                                     #list for sampled data
         graph = np.random.uniform(0, 1, (k,k)) * np.random.binomial(1, density, (k,k))  #make weighted adjacency matrix
@@ -106,11 +107,16 @@ def sim(nn, tt, count):
         ax2.hist(sample, orientation= 'horizontal', color= "k")
         plt.setp((ax1, ax2), ylim=(0,9))
         plt.show()
+        data.append(sample)
+    return data
 
-    return count + 1 #increment counter
 #%%
 # Run simulation
-for i in range(1):
-    counter = sim(n, t,  counter)
+dt = sim(n, t)
 
+#%%
+# Post stats
+stats = []
+for i in range(len(dt)): 
+    stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'kurtosis' : sp.stats.kurtosis(dt[i][0])})
 # %%
