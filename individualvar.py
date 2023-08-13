@@ -12,8 +12,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sp
-import pandas as pd
-
 #%% 
 # Setup 
 k        = 9    #number of nodes
@@ -41,8 +39,8 @@ def calcEnergy(config, extf, gr):
 def mcmove(config, cost, ext, g):
     #Runs Markov chain through a Monte Carlo process via the Metropolis algorithm
     old = calcEnergy(config, ext, g) #prior energy
-    a = np.random.randint(0, k)   #randomly pick symptom to interact with
-    config[a] = config[a] * (-1)  #negate sign
+    a = np.random.randint(0, k)      #randomly pick symptom to interact with
+    config[a] = config[a] * (-1)     #negate sign
     new = calcEnergy(config, ext, g) #calculate new energy
     if (old > new + cost) or (np.random.rand() < np.exp(new * beta) - np.exp(new * beta) * cost): #conditions for accepting proposal
         return new
@@ -118,5 +116,7 @@ dt = sim(n, t)
 # Post stats
 stats = []
 for i in range(len(dt)): 
-    stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'kurtosis' : sp.stats.kurtosis(dt[i][0])})
+    stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'sd' : np.sqrt((np.var(dt[i]))), 'kurtosis' : sp.stats.kurtosis(dt[i][0])})
+#(access stats for given subject with following syntax: "stats[subject number: int][stat name : string]")
+
 # %%
