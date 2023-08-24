@@ -41,6 +41,9 @@ def sim(nn):
         print(np.allclose(graph, graph.T, rtol=1e-05, atol=1e-05))                      #check symmetry
         extfield = np.zeros(k)                                                          #set external field interactions (zero for default sims)
         plt.plot(np.linspace(0, 9, 9), stateeng(extfield, graph))
+        plt.title('Energy of Ising Model at Different States')
+        plt.xlabel('Number of Active Symptoms')
+        plt.ylabel('Energy')
     plt.show()
     return data
 #%%

@@ -115,7 +115,7 @@ def sim(nn, tt, count):
                     plt.show()
         
     sample = np.asarray(sample)
-    '''
+    
     #Add error
     MEn = adderr(sample, 0)   #no error
     MEs = adderr(sample, 0.1) #small error 
@@ -128,7 +128,7 @@ def sim(nn, tt, count):
     MEn.to_excel("MEn" + str(count)  + ".xlsx", index=False)
     MEs.to_excel("MEs" + str(count)  + ".xlsx", index=False)
     MEm.to_excel("MEm" + str(count)  + ".xlsx", index=False)
-    '''
+    
     return count + 1 #increment counter
 #%%
 # Run simulation

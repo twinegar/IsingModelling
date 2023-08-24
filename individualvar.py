@@ -7,13 +7,14 @@
 
 %matplotlib inline
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-import scipy as sp
+from scipy import stats as sp
 #%% 
 # Setup 
 k        = 9     #number of nodes
 t        = 10000 #number of time points
-n        = 10    #number of subjects
+n        = 1000  #number of subjects
 beta     = 0.5   #inverse temperature term
 density  = 0.5   #1 - sparcity 
 threshold = 5    #how many symptoms have to be present to be classified as depressed                                                                   #initialize counter
@@ -39,7 +40,7 @@ def mcMove(config, cost, ext, g):
     a = np.random.randint(0, k)      #randomly pick symptom to interact with
     config[a] = config[a] * (-1)     #negate sign
     new = calcEnergy(config, ext, g) #calculate new energy
-    if (old > new + cost) or (np.random.rand() < np.exp(new * beta) - np.exp(new * beta) * cost): #conditions for accepting proposal
+    if (old > new + cost) or (np.random.rand() < 0.02): #np.exp(new * beta) - np.exp(new * beta) * cost): #conditions for accepting proposal
         return new
     else: 
         config[a] = config[a] * (-1) #reverse proposal if conditions are not met
@@ -48,9 +49,9 @@ def mcMove(config, cost, ext, g):
 def calcMag(config):
     #Subject condition at a given configuration
     if np.sum(config) > (threshold - (k-threshold)): #check if n of active symptoms is greater than the threshold condition
-        mag = 8.5
+        mag = 2
     else: 
-        mag = 0.5
+        mag = 1
     return mag
 
 def switchCost(mlist, clist): 
@@ -80,21 +81,24 @@ def addErr(data, amount):
 def sim(nn, tt): 
     #Takes in n subjects, t timepoints, and a counter for naming output files
     data = []
+    tax = []
+    samplet = np.random.randint(0, tt)
     for subjects in range(nn): 
-        sample = []                                                                     #list for sampled data
         graph = np.random.uniform(0, 1, (k,k)) * np.random.binomial(1, density, (k,k))  #make weighted adjacency matrix
         np.fill_diagonal(graph, 0)                                                      #nodes are not connected to themselves 
         graph = np.tril(graph) + np.triu(graph.T, 1)                                    #make it symmetric
-        print(np.allclose(graph, graph.T, rtol=1e-05, atol=1e-05))                      #check symmetry
-        #thresholds = np.random.uniform(0,1,k)                                          #set transition thresholds uniformly (not utilized)
+        if not (np.allclose(graph, graph.T, rtol=1e-05, atol=1e-05)):
+            print('Error: graph not symmetrical')                                       #check symmetry
         extfield = np.zeros(k)                                                          #set external field interactions (zero for default sims)
         config = initialState(k)                                                        #generate initial system state
-        maglst, energylst, cstlist, sumlst = [], [], [], []                             #initialize lists for tracking vars
+        maglst, energylst, cstlist, sumlst, sample = [], [], [], [], []                           #initialize lists for tracking vars
         for i in range(tt): 
             cstlist.append(switchCost(maglst, cstlist))
             energylst.append(mcMove(config, cstlist[-1], extfield, graph))
             maglst.append(calcMag(config))
             sumlst.append(sum((config +1)/ 2))
+            if i == samplet:
+                tax.append(config)
         sample.append(sumlst)
         '''
         fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -107,16 +111,34 @@ def sim(nn, tt):
         data.append(sample)
     data = np.asarray(data)
     plt.hist(data.flatten())
+    plt.title('Group Level Distribution of Symptom Sum Score')
+    plt.xlabel('Number of Active Symptoms')
+    plt.ylabel('Count')
     plt.show()
-    return data
+    return tax
 
 #%%
 # Run simulation
 dt = sim(n, t)
-
 #%%
 # Post stats
 stats = []
 for i in range(len(dt)): 
-    stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'sd' : np.sqrt((np.var(dt[i]))), 'kurtosis' : sp.stats.kurtosis(dt[i][0])})
+    stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'sd' : np.sqrt((np.var(dt[i]))), 'kurtosis' : sp.kurtosis(dt[i][0])})
 #(access stats for given subject with following syntax: "stats[subject number: int][stat name : string]")
+#%%
+# Add error
+dt = np.asarray(dt)
+MEn = addErr(dt, 0)   #no error
+MEs = addErr(dt, 0.1) #small error 
+MEm = addErr(dt, 0.2) #moderate error
+
+colnames = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'condition']  #set column names for output data
+# Write data to xlsx for use with R
+MEn = pd.DataFrame(MEn, columns= colnames)
+MEs = pd.DataFrame(MEs, columns= colnames)
+MEm = pd.DataFrame(MEm, columns= colnames)
+MEn.to_excel("MEn" + ".xlsx", index=False)
+MEs.to_excel("MEs" + ".xlsx", index=False)
+MEm.to_excel("MEm" + ".xlsx", index=False)
+# %%
