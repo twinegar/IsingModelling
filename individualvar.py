@@ -92,7 +92,7 @@ def sim(nn, tt):
         extfield = np.zeros(k)                                                          #set external field interactions (zero for default sims)
         config = initialState(k)                                                        #generate initial system state
         maglst, energylst, cstlist, sumlst, sample = [], [], [], [], []                           #initialize lists for tracking vars
-        for i in range(tt): 
+        for i in range(samplet + 1): 
             cstlist.append(switchCost(maglst, cstlist))
             energylst.append(mcMove(config, cstlist[-1], extfield, graph))
             maglst.append(calcMag(config))
@@ -118,27 +118,28 @@ def sim(nn, tt):
     return tax
 
 #%%
-# Run simulation
-dt = sim(n, t)
+# Run simulation and write results
+counter = 0
+for i in range(10):
+    dt = sim(n, t)
+    dt = np.asarray(dt)
+    MEn = addErr(dt, 0)   #no error
+    MEs = addErr(dt, 0.1) #small error 
+    MEm = addErr(dt, 0.2) #moderate error
+    colnames = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'condition']  #set column names for output data
+    # Write data to xlsx for use with R
+    MEn = pd.DataFrame(MEn, columns= colnames)
+    MEs = pd.DataFrame(MEs, columns= colnames)
+    MEm = pd.DataFrame(MEm, columns= colnames)
+    MEn.to_excel("FinMEn" + str(counter) + ".xlsx", index=False)
+    MEs.to_excel("FinMEs" + str(counter) + ".xlsx", index=False)
+    MEm.to_excel("FinMEm" + str(counter) + ".xlsx", index=False)
+    counter += 1
 #%%
 # Post stats
 stats = []
 for i in range(len(dt)): 
     stats.append({'mean' : np.mean(dt[i]), 'median' : np.median(dt[i]), 'var' : np.var(dt[i]), 'sd' : np.sqrt((np.var(dt[i]))), 'kurtosis' : sp.kurtosis(dt[i][0])})
 #(access stats for given subject with following syntax: "stats[subject number: int][stat name : string]")
-#%%
-# Add error
-dt = np.asarray(dt)
-MEn = addErr(dt, 0)   #no error
-MEs = addErr(dt, 0.1) #small error 
-MEm = addErr(dt, 0.2) #moderate error
 
-colnames = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'condition']  #set column names for output data
-# Write data to xlsx for use with R
-MEn = pd.DataFrame(MEn, columns= colnames)
-MEs = pd.DataFrame(MEs, columns= colnames)
-MEm = pd.DataFrame(MEm, columns= colnames)
-MEn.to_excel("MEn" + ".xlsx", index=False)
-MEs.to_excel("MEs" + ".xlsx", index=False)
-MEm.to_excel("MEm" + ".xlsx", index=False)
 # %%
